@@ -1,5 +1,5 @@
-1. Create a basic react/nextjs application
-2. Connect our wallet with a nicer connect application (RAINBOWKIT)
+1. Create a basic react/nextjs application ✅
+2. Connect our wallet with a nicer connect application (RAINBOWKIT) ✅
 3. Implement this function
 ```javascript
 function airdropERC20(

@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { type ReactNode } from "react";
-// import Header from "@/components/Header";
+import Header from "@/components/Header";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -17,7 +17,7 @@ export default function RootLayout(props: { children: ReactNode }) {
       </head>
       <body className="bg-zinc-50">
         <Providers>
-          {/* <Header /> */}
+          <Header />
           {props.children}
         </Providers>
       </body>
