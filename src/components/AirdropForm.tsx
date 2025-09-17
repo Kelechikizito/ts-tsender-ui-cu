@@ -1,12 +1,20 @@
 "use client";
 
 import { InputForm } from "@/components/ui/InputField";
-import { useState, useMemo, CSSProperties } from "react";
+import TxDetails from "@/components/ui/TxDetails";
+import { useState, useMemo, CSSProperties, useEffect } from "react";
 import { chainsToTSender, tsenderAbi, erc20Abi } from "@/constants";
-import { useChainId, useConfig, useAccount, useWriteContract } from "wagmi";
+import {
+  useChainId,
+  useConfig,
+  useAccount,
+  useWriteContract,
+  useReadContracts,
+} from "wagmi";
 import { readContract, waitForTransactionReceipt } from "@wagmi/core";
-import { calculateTotal } from "@/utils";
+import { calculateTotal, formatTokenAmount } from "@/utils";
 import { MoonLoader } from "react-spinners";
+import { formatUnits } from "viem";
 
 const override: CSSProperties = {
   display: "block",
@@ -18,18 +26,38 @@ export default function AirdropForm() {
   const [tokenAddress, setTokenAddress] = useState("");
   const [recipients, setRecipients] = useState("");
   const [amounts, setAmounts] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(true);
   const [status, setStatus] = useState<
     "idle" | "awaiting-wallet-confirmation" | "mining"
   >("idle"); // This indicates that the status can either be idle, awaiting-wallet-confirmation, or mining
   const [color, setColor] = useState("#ffffff");
+  const [contractAmountTokens, setcontractAmountTokens] = useState("");
 
   const chainId = useChainId();
   const config = useConfig();
   const account = useAccount();
   const total: number = useMemo(() => calculateTotal(amounts), [amounts]); // Anytime the amounts variable changes, the calculateTotal function runs and saves it to the total variable
   const { data: hash, isPending, writeContractAsync } = useWriteContract();
+  const { data: tokenData } = useReadContracts({
+    contracts: [
+      {
+        abi: erc20Abi,
+        address: tokenAddress as `0x${string}`,
+        functionName: "decimals",
+      },
+      {
+        abi: erc20Abi,
+        address: tokenAddress as `0x${string}`,
+        functionName: "name",
+      },
+      {
+        abi: erc20Abi,
+        address: tokenAddress as `0x${string}`,
+        functionName: "balanceOf",
+        args: [account.address],
+      },
+    ],
+  });
+  const [hasEnoughTokens, setHasEnoughTokens] = useState(true);
 
   async function getApprovedAmount(
     tSenderAddress: string | null
@@ -134,6 +162,36 @@ export default function AirdropForm() {
       setStatus("idle");
     }
   }
+
+  useEffect(() => {
+    const savedTokenAddress = localStorage.getItem("tokenAddress");
+    const savedRecipients = localStorage.getItem("recipients");
+    const savedAmounts = localStorage.getItem("amounts");
+
+    savedTokenAddress ? setTokenAddress(savedTokenAddress) : null;
+    savedRecipients ? setRecipients(savedRecipients) : null;
+    savedAmounts ? setAmounts(savedAmounts) : null;
+  }, []); // The empty [] means this effect runs only once on mount
+
+  useEffect(() => {
+    localStorage.setItem("tokenAddress", tokenAddress);
+    localStorage.setItem("recipients", recipients);
+    localStorage.setItem("amounts", amounts);
+  }, [tokenAddress, recipients, amounts]); // This effect runs anytime tokenAddress, recipients, or amounts changes
+
+  useEffect(() => {
+    if (
+      tokenAddress &&
+      total > 0 &&
+      (tokenData?.[2]?.result as number) !== undefined
+    ) {
+      const userBalance = tokenData?.[2].result as number;
+      setHasEnoughTokens(userBalance >= total);
+    } else {
+      setHasEnoughTokens(true);
+    }
+  }, [tokenAddress, total, tokenData]);
+
   return (
     <div>
       <InputForm
@@ -155,6 +213,14 @@ export default function AirdropForm() {
         value={amounts}
         large={true}
         onChange={(e) => setAmounts(e.target.value)}
+      />
+      <TxDetails
+        tokenName={tokenData?.[1]?.result as string}
+        tokenAmountWei={total.toString()}
+        tokenAmountTokens={formatTokenAmount(
+          total,
+          tokenData?.[0]?.result as number
+        )}
       />
       <button
         onClick={handleSubmit}

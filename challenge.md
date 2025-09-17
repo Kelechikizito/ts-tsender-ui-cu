@@ -37,3 +37,28 @@ React's useEffect hook is ideal for managing these side effects:
 A useEffect with an empty dependency array ([]) runs once when the component mounts – suitable for retrieving data from local storage.
 
 Separate useEffect hooks with specific dependencies (e.g., [tokenAddress]) run whenever that particular piece of state changes – suitable for saving data to local storage.
+
+## Challenge 3: Display Dynamic Token Transaction Details
+
+Goal: Provide the user with immediate, clear information about the token they are interacting with and the total amount they are preparing to send, based on their inputs.
+
+Specifics:
+Add a new section or display area in your UI that shows the following details, updating dynamically as the user enters information:
+
+Token Name: Read the name property directly from the ERC20 token contract specified in the "Token Address" input.
+
+Total Amount (wei): Calculate the sum of all valid numerical values entered in the "Amounts" input field.
+
+Total Amount (tokens): Convert the calculated total wei amount into the standard token unit display. This requires reading the decimals property from the token contract and using it to format the total wei value correctly (e.g., dividing by 10 ** decimals). This value should update as the user types in the amounts field.
+
+Hints:
+
+You'll need to interact with the token contract on the blockchain to read its name and decimals.
+
+Use a library like Wagmi to simplify blockchain interactions.
+
+Performance Tip: Instead of making multiple separate calls (e.g., using useReadContract for name, then again for decimals), use the useReadContracts hook (plural) from Wagmi. This hook allows you to batch multiple read calls into a single request, improving performance.
+
+Parse the amounts input (remembering it can be comma or newline separated) and sum the values. Ensure robust error handling for non-numeric inputs.
+
+Use the fetched decimals value to format the total wei sum into a human-readable token amount (e.g., using ethers.utils.formatUnits or equivalent logic).
