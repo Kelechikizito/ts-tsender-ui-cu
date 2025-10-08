@@ -9,7 +9,7 @@ function airdropERC20(
         uint256 totalAmount
     )
 ```
-1. E2E Testing
+1. E2E Testing ✅
    1. When we connect, we see the form
    2. When disconnected, we don't
 2. Deploy to fleek
